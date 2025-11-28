@@ -1,9 +1,17 @@
-import Image from "next/image";
+'use client';
+
+import Loading from "./components/loading";
+import { useState } from "react";
 
 export default function Home() {
+
+  const [isLoading, setIsLoading] = useState(false);
+
   return (
     <div>
-      <p>Olo to spel</p>
+      <div className="flex, column, items-center, justify-center, h-screen">
+        <Loading isLoading={isLoading} />
+      </div>
     </div>
   );
 }
