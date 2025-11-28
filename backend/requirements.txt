@@ -1,1 +1,17 @@
+
 flask
+tensorflow==2.20.0
+optree
+numpy>=1.24
+scipy
+Pillow
+opencv-python
+pandas
+scikit-learn
+matplotlib
+seaborn
+h5py
+tqdm
+PyYAML
+
+tensorflow-datasets
