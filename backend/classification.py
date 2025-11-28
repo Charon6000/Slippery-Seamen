@@ -4,10 +4,8 @@ import tensorflow as tf
 from tensorflow.keras import layers, models  # type: ignore
 from tensorflow.keras.models import Sequential
 
-
-
-base_path = Path(__file__).resolve().parent / "training_data"
-IMG_SIZE=(32, 32)
+base_path = Path("training_data")
+IMG_SIZE=(224, 224)
 train_ds, val_ds, categories = prepare(base_path, IMG_SIZE)
 
 num_classes = len(categories)
@@ -36,4 +34,4 @@ model.fit(
   validation_data=val_ds,
   epochs=1
 )
-model.save(Path(__file__).resolve().parent / "models/spur_model.h5")
+model.save(Path("models/model.h5"))

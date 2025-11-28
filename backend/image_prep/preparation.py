@@ -24,13 +24,9 @@ def prepare(base_path: Path, IMG_SIZE = (600, 600)):
 
 
     print("Categories:")
-    i = 0
     for cat in categories:
         file_path = base_path / cat
         print(file_path)
-        i+=1
-        #ologej for file in file_path.iterdir():
-        #     print(file)
             
     train_ds = tf.keras.utils.image_dataset_from_directory(
         base_path,
