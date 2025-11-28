@@ -11,6 +11,7 @@ matplotlib
 seaborn
 h5py
 tqdm
+flask_cors
 PyYAML
 
 tensorflow-datasets

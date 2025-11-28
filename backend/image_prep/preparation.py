@@ -1,64 +1,47 @@
-import importlib.util
 import os
 import sys
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-from image_display import show_images_from_dataset
-from sklearn.metrics import classification_report, confusion_matrix
-from tensorflow.keras import layers, mixed_precision, models  # type: ignore
-from tensorflow.keras.applications import EfficientNetB0  # type: ignore
+from sklearn.metrics import classification_report
+from tensorflow.keras import layers, mixed_precision, models
+from tensorflow.keras.applications import EfficientNetB0
 from tensorflow.keras.applications.efficientnet import preprocess_input
+from tensorflow.keras.callbacks import (CSVLogger, EarlyStopping,
+                                        ModelCheckpoint, ReduceLROnPlateau)
+
+try:
+    from image_display import show_images_from_dataset
+    HAS_DISPLAY = True
+except ImportError:
+    HAS_DISPLAY = False
+
+print("TensorFlow:", tf.__version__)
+
+try:
+    mixed_precision.set_global_policy('mixed_float16')
+except:
+    pass
 
 training_dir = Path(__file__).resolve().parent.parent / "data" / "training"
 validation_dir = Path(__file__).resolve().parent.parent / "data" / "validation"
 testing_dir = Path(__file__).resolve().parent.parent / "data" / "testing"
 
-categories = ["0_mouse_bite", "5_spurious_copper", "1_spur", "2_missing_hole", "3_short", "4_open_circuit"]
-
-print("TensorFlow:", tf.__version__)
-
-gpus = tf.config.list_physical_devices('GPU')
-print("Physical GPUs:", gpus)
-gpu_present = len(gpus) > 0 and tf.test.is_built_with_cuda()
-if gpus:
-    for g in gpus:
-        try:
-            tf.config.experimental.set_memory_growth(g, True)
-        except Exception as e:
-            print("failed memory growth: ", e)
-
-if gpu_present:
-    mixed_precision.set_global_policy('mixed_float16')
-    tf.config.optimizer.set_jit(True)
-else:
-    print('GPU not available')
-
 os.makedirs('models', exist_ok=True)
 
 IMG_SIZE = (224, 224)
-DEFAULT_BATCH = 128 if gpu_present else 32
-BATCH_SIZE = int(os.environ.get('BATCH_SIZE', DEFAULT_BATCH))
+BATCH_SIZE = 16
 AUTOTUNE = tf.data.AUTOTUNE
 
-print("Categories:")
-i = 0
-for cat in categories:
-    file_path = training_dir / cat
-    print(file_path)
-    i+=1
-        
-train_ds = tf.keras.utils.image_dataset_from_directory(
+
+train_ds_raw = tf.keras.utils.image_dataset_from_directory(
     training_dir,
     labels='inferred',
     label_mode='int',
     image_size=IMG_SIZE,
-    batch_size=BATCH_SIZE,
-    validation_split=0.2,
-    subset='training',
-    seed=123
+    batch_size=None,
+    shuffle=True
 )
 
 val_ds = tf.keras.utils.image_dataset_from_directory(
@@ -67,9 +50,7 @@ val_ds = tf.keras.utils.image_dataset_from_directory(
     label_mode='int',
     image_size=IMG_SIZE,
     batch_size=BATCH_SIZE,
-    validation_split=0.2,
-    subset='validation',
-    seed=123
+    shuffle=False
 )
 
 test_ds = tf.keras.utils.image_dataset_from_directory(
@@ -81,81 +62,79 @@ test_ds = tf.keras.utils.image_dataset_from_directory(
     shuffle=False
 )
 
-#display zone
-class_names = train_ds.class_names
-print('Class names:', class_names)
-show_images_from_dataset(train_ds, num=8)
-    
+class_names = train_ds_raw.class_names
+num_classes = len(class_names)
+print(f'Class names: {class_names}')
+
+if HAS_DISPLAY:
+    show_images_from_dataset(train_ds_raw.batch(8), num=8)
+
+print("Creating balanced dataset...")
+class_datasets = []
+for i in range(num_classes):
+    ds_i = train_ds_raw.filter(lambda x, y: tf.equal(y, i))
+    class_datasets.append(ds_i)
+
+train_ds_balanced = tf.data.Dataset.sample_from_datasets(
+    class_datasets, 
+    weights=[1/num_classes] * num_classes,
+    stop_on_empty_dataset=False
+)
 
 data_augmentation = tf.keras.Sequential([
     layers.RandomFlip("horizontal"),
+    layers.RandomRotation(0.1),
+    layers.RandomZoom(0.1),
+    layers.RandomContrast(0.1),
 ], name='data_augmentation')
 
-train_ds = train_ds.map(lambda x, y: (tf.cast(x, tf.float32), y), num_parallel_calls=AUTOTUNE)
-train_ds = train_ds.map(lambda x, y: (preprocess_input(x), y), num_parallel_calls=AUTOTUNE)
+def preprocess_data(x, y):
+    x = tf.cast(x, tf.float32)
+    x = preprocess_input(x)
+    return x, y
 
-val_ds = val_ds.map(lambda x, y: (preprocess_input(tf.cast(x, tf.float32)), y), num_parallel_calls=AUTOTUNE)
+train_ds = train_ds_balanced.batch(BATCH_SIZE)
+train_ds = train_ds.map(preprocess_data, num_parallel_calls=AUTOTUNE)
+train_ds = train_ds.map(lambda x, y: (data_augmentation(x, training=True), y), num_parallel_calls=AUTOTUNE)
+train_ds = train_ds.prefetch(AUTOTUNE)
 
-
-num_classes = len(class_names)
-counts = {}
-for i, cname in enumerate(class_names):
-    p = training_dir / cname
-    counts[cname] = len([f for f in p.iterdir() if f.is_file()])
-print('Class counts:', counts)
-total = sum(counts.values()) if counts else 0
-if total == 0:
-    raise RuntimeError('No training images found; check `training_dir`.')
-class_weights = {i: total / (num_classes * counts[class_names[i]]) for i in range(num_classes)}
-print('Class weights:', class_weights)
-
-class_weights_list = [class_weights[i] for i in range(num_classes)]
-class_weights_tensor = tf.constant(class_weights_list, dtype=tf.float32)
-
-train_ds = train_ds.map(
-    lambda x, y: (x, y, tf.gather(class_weights_tensor, tf.cast(y, tf.int32))),
-    num_parallel_calls=AUTOTUNE
-)
-
-train_ds = train_ds.shuffle(1000).prefetch(AUTOTUNE)
-val_ds = val_ds.prefetch(AUTOTUNE)
-
-print(train_ds)
-print(val_ds)
-
+val_ds = val_ds.map(preprocess_data, num_parallel_calls=AUTOTUNE).cache().prefetch(AUTOTUNE)
+test_ds = test_ds.map(preprocess_data, num_parallel_calls=AUTOTUNE).prefetch(AUTOTUNE)
 
 inputs = layers.Input(shape=(*IMG_SIZE, 3))
-x = data_augmentation(inputs)
+base_model = EfficientNetB0(include_top=False, input_tensor=inputs, weights='imagenet')
 
-base_model = EfficientNetB0(include_top=False, input_shape=(*IMG_SIZE, 3), weights='imagenet')
 base_model.trainable = False
-x = base_model(x, training=False)
+
+x = base_model.output
 x = layers.GlobalAveragePooling2D()(x)
+x = layers.BatchNormalization()(x)
+x = layers.Dropout(0.2)(x) 
 x = layers.Dense(256, activation='relu')(x)
 x = layers.Dropout(0.4)(x)
-outputs = layers.Dense(num_classes)(x)
-outputs = layers.Activation('softmax', dtype='float32')(outputs)
+outputs = layers.Dense(num_classes, activation='softmax', dtype='float32')(x) # Ensure float32 output for mixed precision
 
 model = models.Model(inputs, outputs)
+
+print('\n=== Phase 1: Training Head ===')
 
 model.compile(
     optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
     loss='sparse_categorical_crossentropy',
     metrics=['accuracy']
 )
-callbacks = [
-    tf.keras.callbacks.ModelCheckpoint('models/best_weights.weights.h5', save_best_only=True, save_weights_only=True, monitor='val_loss'),
-    tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=6, restore_best_weights=True),
-    tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, min_lr=1e-6)
-]
+
 history = model.fit(
     train_ds,
     validation_data=val_ds,
-    epochs=20,
-    callbacks=callbacks,
+    epochs=5,
+    steps_per_epoch=200 # Optional: Limit steps since we are oversampling infinitely
 )
-base_model.trainable = True
 
+print('\n=== Phase 2: Fine-Tuning ===')
+
+base_model.trainable = True
+# Freeze all layers except the last 20
 for layer in base_model.layers[:-20]:
     layer.trainable = False
 
@@ -165,24 +144,37 @@ model.compile(
     metrics=['accuracy']
 )
 
-fine_history = model.fit(train_ds, validation_data=val_ds, epochs=10, callbacks=callbacks)
+callbacks = [
+    ModelCheckpoint('models/best_model.keras', save_best_only=True, monitor='val_loss'),
+    EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True),
+    ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-7),
+    CSVLogger('models/training.log')
+]
 
-test_ds = test_ds.map(lambda x, y: (preprocess_input(tf.cast(x, tf.float32)), y), num_parallel_calls=tf.data.AUTOTUNE)
-test_ds = test_ds.prefetch(tf.data.AUTOTUNE)
+history_ft = model.fit(
+    train_ds,
+    validation_data=val_ds,
+    epochs=20,
+    steps_per_epoch=200, 
+    callbacks=callbacks
+)
 
-y_true = np.concatenate([y.numpy() for x, y in test_ds], axis=0)
-y_scores = model.predict(test_ds)
-y_pred = np.argmax(y_scores, axis=-1)
-
-print(classification_report(y_true, y_pred))
-print(confusion_matrix(y_true, y_pred))
+print('\n=== Evaluation ===')
 
 try:
-    model.save('models/saved_model.keras')
-except Exception:
-    model.save_weights('models/final_weights.weights.h5')
+    model.load_weights('models/best_model.keras')
+except:
+    print("Could not load best weights, using current weights.")
 
-model.summary()
-print('Trainable params:', sum(int(tf.size(w).numpy()) for w in model.trainable_weights))
+results = model.evaluate(test_ds)
+print(f'Test Loss: {results[0]}, Test Acc: {results[1]}')
 
-    
+y_true = np.concatenate([y.numpy() for x, y in test_ds], axis=0)
+predictions = model.predict(test_ds)
+y_pred = np.argmax(predictions, axis=-1)
+
+print("\nClassification Report:")
+print(classification_report(y_true, y_pred, target_names=class_names))
+
+model.save('models/final_model.keras')
+print("Model saved to models/final_model.keras")
