@@ -143,5 +143,3 @@ print(confusion_matrix(y_true, y_pred))
 model.save('models/saved_model.keras')
 model.summary()
 print('Trainable params:', sum(p.numpy().size for p in model.trainable_weights))
-
-    
