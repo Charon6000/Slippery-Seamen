@@ -2,51 +2,71 @@ import importlib.util
 import os
 import sys
 from pathlib import Path
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import layers, models  # type: ignore
 
-sorting_path = Path(__file__).resolve().parent / "sorting.py"
-spec = importlib.util.spec_from_file_location("sorting", sorting_path)
-sorting = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(sorting)
-categories = sorting.categories
-
-base_path = Path(__file__).resolve().parent.parent / "data" / "training"
-
-print("TensorFlow:", tf.__version__)
-print("GPUs:", tf.config.list_physical_devices('GPU'))
+def prepare(base_path: Path, IMG_SIZE = (600, 600)):
+    sorting_path = Path(__file__).resolve().parent / "sorting.py"
+    spec = importlib.util.spec_from_file_location("sorting", sorting_path)
+    sorting = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sorting)
+    categories = sorting.categories
 
 
-IMG_SIZE = (600, 600) #224
-BATCH_SIZE = 32
+    print("TensorFlow:", tf.__version__)
+    # print("GPUs:", tf.config.list_physical_devices('GPU'))
 
 
-print("Categories:")
-i = 0
-for cat in categories:
-    file_path = base_path / cat
-    print(file_path)
-    i+=1
-    #ologej for file in file_path.iterdir():
-    #     print(file)
-        
-train_ds = tf.keras.utils.image_dataset_from_directory(
-    base_path,
-    labels='inferred',
-    label_mode='categorical',        # 'int' lub 'categorical'
-    image_size=IMG_SIZE,
-    batch_size=BATCH_SIZE,
-    shuffle=True,
-)
+    BATCH_SIZE = 32
 
-normalization = tf.keras.layers.Rescaling(1./255)
-train_ds = train_ds.map(lambda x,y: (normalization(x), y), num_parallel_calls=tf.data.AUTOTUNE)
-train_ds = train_ds.prefetch(tf.data.AUTOTUNE)
 
-print(train_ds)
+    print("Categories:")
+    i = 0
+    for cat in categories:
+        file_path = base_path / cat
+        print(file_path)
+        i+=1
+        #ologej for file in file_path.iterdir():
+        #     print(file)
+            
+    train_ds = tf.keras.utils.image_dataset_from_directory(
+        base_path,
+        labels='inferred',
+        validation_split=0.2,
+        label_mode='categorical',  
+        subset="training",
+        seed=123,      # 'int' lub 'categorical'
+        image_size=IMG_SIZE,
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+    )
+
+    val_ds = tf.keras.utils.image_dataset_from_directory(
+        base_path,
+        labels='inferred',
+        validation_split=0.2,
+        label_mode='categorical',  
+        subset="validation",
+        seed=123,      # 'int' lub 'categorical'
+        image_size=IMG_SIZE,
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+    )
+
+    normalization = tf.keras.layers.Rescaling(1./255)
+    train_ds = train_ds.map(lambda x,y: (normalization(x), y), num_parallel_calls=tf.data.AUTOTUNE)
+    train_ds = train_ds.prefetch(tf.data.AUTOTUNE)
+
+    val_ds = train_ds.map(lambda x,y: (normalization(x), y), num_parallel_calls=tf.data.AUTOTUNE)
+    val_ds = train_ds.prefetch(tf.data.AUTOTUNE)
+
+    # show_images_from_dataset(val_ds, num=8, ncols=2)
+
+    return train_ds, val_ds, categories
+
 def show_images_from_dataset(dataset, num=8, ncols=4):
     images = []
     labels = []
@@ -74,9 +94,13 @@ def show_images_from_dataset(dataset, num=8, ncols=4):
     for ax in axes[n:]:
         ax.axis('off')
     plt.tight_layout()
-    plt.show()
+    out_dir = Path(__file__).resolve().parent / "out_images"
+    out_dir.mkdir(exist_ok=True)
+    out_path = out_dir / f"dataset_preview_{int(time.time())}.png"
+    plt.savefig(out_path, bbox_inches='tight')
+    plt.close()
+    print("Saved preview to", out_path)
 
-show_images_from_dataset(train_ds, num=8)
 # fig, axes = plt.subplots(1,10, figsize=(10,10))
 # for i in range(10):
 #     image = train_ds[i]
