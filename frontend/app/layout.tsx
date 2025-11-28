@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "UI",
-  description: "",
+  title: "PCB Flaw Detection",
+  description: "Created by Slippery Seamen",
 };
 
 export default function RootLayout({
