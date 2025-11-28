@@ -1,5 +1,7 @@
 #custom
 backend/data
+testing_data/
+trening_data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -213,3 +215,4 @@ __marimo__/
 # Prettier config
 .prettierrc
 __marimo__/
+
