@@ -1,9 +1,4 @@
-interface LoadingProps {
-    isLoading: boolean;
-    text?: string;
-}
-
-const Loading = ({ isLoading, text = 'Preparing results...' }: LoadingProps) => {
+const Loading = ({ isLoading, text = 'Preparing results...' }) => {
     if (!isLoading) return null;
 
     return (
