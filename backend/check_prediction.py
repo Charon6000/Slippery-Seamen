@@ -19,4 +19,4 @@ def check(path):
     for i in predictions:
         print(i)
 
-check("training_data")
+check("testing_data")
