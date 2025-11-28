@@ -2,16 +2,14 @@
 
 import Loading from "./components/loading";
 import { useState } from "react";
+import UploadContainer from "./components/UploadContainer.js"
+import './globals.css'
 
 export default function Home() {
 
   const [isLoading, setIsLoading] = useState(false);
 
   return (
-    <div>
-      <div className="flex, column, items-center, justify-center, h-screen">
-        <Loading isLoading={isLoading} />
-      </div>
-    </div>
+    <UploadContainer />
   );
 }
