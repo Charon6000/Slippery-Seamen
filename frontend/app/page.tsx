@@ -1,9 +1,8 @@
-import Image from "next/image";
+import UploadContainer from "./components/UploadContainer.js"
+import './globals.css'
 
 export default function Home() {
   return (
-    <div>
-      <p>Olo to spel</p>
-    </div>
+    <UploadContainer />
   );
 }
