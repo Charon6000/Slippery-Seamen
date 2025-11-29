@@ -2,17 +2,21 @@ import shutil
 from pathlib import Path
 
 here = Path(__file__).resolve().parent.parent / "data"
-sort_dir = here / "to_sort"
+train_sort_dir = here / "train_to_sort"
 training_dir = here / "training"
 
-print("sort dir: ", sort_dir)
-print("training dir: ", training_dir)
+val_sort_dir = here / "val_to_sort"
+validation_dir = here / "validation"
+
+test_sort_dir = here / "test_to_sort"
+testing_dir = here / "testing"
+
 
 categories = ["0_mouse_bite", "5_spurious_copper", "1_spur", "2_missing_hole", "3_short", "4_open_circuit"]
 
 
-def safe_move_to_category(src_path: Path, category: str):
-    dst_dir = training_dir / category
+def safe_move_to_category(src_path: Path, category: str, target_folder: str):
+    dst_dir = target_folder / category
     dst_dir.mkdir(parents=True, exist_ok=True)
 
     candidates = [src_path]
@@ -31,15 +35,35 @@ def safe_move_to_category(src_path: Path, category: str):
     return False
 
 
-if not sort_dir.exists():
-    print("Sort directory does not exist:", sort_dir)
+if not train_sort_dir.exists():
+    print("Sort directory does not exist:", train_sort_dir)
 else:
-    for entry in sort_dir.iterdir():
+    for entry in train_sort_dir.iterdir():
         if not entry.is_file():
             continue
         name = entry.name
         for cat in categories:
             keyword = cat[2:]
             if keyword in name:
-                safe_move_to_category(entry, cat)
+                safe_move_to_category(entry, cat, training_dir)
                 break
+    for entry in val_sort_dir.iterdir():
+        if not entry.is_file():
+            continue
+        name = entry.name
+        for cat in categories:
+            keyword = cat[2:]
+            if keyword in name:
+                safe_move_to_category(entry, cat, validation_dir)
+                break
+    for entry in test_sort_dir.iterdir():
+        if not entry.is_file():
+            continue
+        name = entry.name
+        for cat in categories:
+            keyword = cat[2:]
+            if keyword in name:
+                safe_move_to_category(entry, cat, testing_dir)
+                break
+
+
