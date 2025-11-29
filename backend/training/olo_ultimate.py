@@ -20,7 +20,7 @@ DATA_DIR = base_dir / 'data' / "data_contrast"
 
 IMAGE_SIZE = (224, 224)
 BATCH_SIZE = 32
-EPOCHS = 10
+EPOCHS = 3
 NUM_CLASSES = 6
 MODEL_SAVE_PATH = 'models/pcb_defect_classifier_mobilenetv2.keras'
 
