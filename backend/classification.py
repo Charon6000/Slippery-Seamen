@@ -10,6 +10,10 @@ train_ds, val_ds, categories = prepare(base_path, IMG_SIZE)
 
 num_classes = len(categories)
 
+train_ds, val_ds, categories = prepare(base_path, IMG_SIZE)
+
+num_classes = len(categories)
+
 model = Sequential([
   # usuwamy Rescaling tutaj — dane już znormalizowane w prepare()
   layers.Conv2D(2, 3, padding='same', activation='relu', input_shape=(*IMG_SIZE, 3)),
