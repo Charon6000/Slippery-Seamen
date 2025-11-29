@@ -3,6 +3,7 @@ backend/data
 backend/training_data
 testing_data/
 trening_data/
+kontrast_data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
