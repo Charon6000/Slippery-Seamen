@@ -4,16 +4,16 @@
 Program wykorzystuje struktury uczenia maszynowego do tworzenia modelu AI stwierdzającego rodzaj uszkodzenia płyty PCB. Porozumiewa się przy tym z użytkownikiem za pomocą przyjaznego interfejsu na stronie internetowej.
 
 ## Użyte technologie
-- Do odpowiedniej komunikacji z konsumentem użyliśmy środowiska reactjs, które oprócz prostoty i szybkości pracy pozwala do połączenie z serwerem. React jest rozwiązaniem często używanym na hackathonach ponieważ 
-jest samohostowany oraz umożliwia rozkład projektu na komponenty dające przejrzystość kodu.
+- Do odpowiedniej komunikacji z użytkownikiem użyliśmy środowiska React.js, które oprócz prostoty i szybkości pracy pozwala na połączenie z serwerem. React jest rozwiązaniem często używanym na hackathonach, ponieważ 
+jest samohostowany oraz umożliwia podział projektu na komponenty dające przejrzystość kodu.
 - Jako środowisko hostujące serwer użyliśmy tailwinda ze względu na jego prostote i możliwość używania języka python, który jest najbardziej popularny jeśli chodzi o tworzenie modeli AI.
-- Aby stworzyć model sztucznej inteligencji należy używać algorytmów uczenia maszynowago. Rozwiązaniem stworzonym do pracy na grafikach jest tensorflow, mający dodatkowe uprostrzenie keras. Dzięki niemu możliwe było szybkie wyszkolenie modelu bez konieczności posiadania wiedzy z zakresu matematyki. Tensorflow posiada również wiele poradników i świetna dokumentacje, co ostatecznie zadecydowało o jej użyciu.
+- Aby stworzyć model sztucznej inteligencji należy używać algorytmów uczenia maszynowago. Rozwiązaniem stworzonym do pracy na grafikach jest TensorFlow, z dodatkowym zintegrowanym API - Keras. Dzięki niemu możliwe było szybkie wyszkolenie modelu bez konieczności posiadania wiedzy z zakresu matematyki. Tensorflow posiada również wiele poradników i świetną dokumentacje, co ostatecznie zadecydowało o jego użyciu.
 
 ## Jak uruchomić program
-Program działa na 2 płaszczyznach - Frontend (flask) i Backend (Reactjs).
-- W folderze backend należy stworzyć środowisko wirtualne ``` python -m venv venv ```, a następnie w nie wejść ```venv/Scripts/activate``` (Windows) albo ```vanv/bin/activate``` (Linux) i pobrać wymagane biblioteki z pliku requirements.txt ```pip install -r requirements.txt```. W celu uruchomienia serwera należy za pomocą polecenia ```flask --app main.py run``` uruchomić główny plik operacyjny.
+Program działa na 2 płaszczyznach - Frontend (React.js) i Backend (Flask).
+- W folderze backend należy stworzyć środowisko wirtualne ``` python -m venv venv ```, a następnie w nie wejść ```venv/Scripts/activate``` (Windows) albo ```venv/bin/activate``` (Linux) i pobrać wymagane biblioteki z pliku requirements.txt ```pip install -r requirements.txt```. W celu uruchomienia serwera należy użyć polecenie ```flask --app main.py run``` aby uruchomić główny plik operacyjny.
 
-- W folderze powinien być folder PCB_Flaw_Detection_UI, ale frontend mamy na innym repozytorium ```https://github.com/MagPiePL/PCB_Flaw_Detection_UI.git``` po sklonowaniu repozytorium i pobraniu node js, należy zainstalować npm ```npm install``` oraz uruchomić projekt ```npm run dev```
+- W folderze PCB_Flaw_Detection_UI po pobraniu Node.js, należy wykonać komende ```npm install``` oraz zbudować ```npm run build``` i uruchomić projekt ```npm run start```.
 
 ## Zbiory danych:
 - Użyto zestawu danych: 
@@ -29,25 +29,25 @@ Wyszczególnione wady konstrukcyjne:
 - przerwanie obwodu
 - błędy miedzi
 
-### plusy:
+### Mocne strony:
 - wysoka jakość obrazów, którą można skalować
 - różnorodność problemów ukazanych na obrazach
 - popularny typ jpg
 - ogromna ilość plików
 - darmowy dostęp do plików po zalogowaniu
 
-### szanse:
+### Szanse:
 - możliwa łatwa aktualizacja danych
 - możliwe łatwe rozszerzenie danych o nowe przypadki
 
-### minusy:
-- pliki bardzo dużo ważą
+### Słabe strony:
+- pliki zajmują sporo miejsca
 - pliki nie mają nałożonych efektów ułatwiających postrzeganie defektów przez co trzeba je modyfikować
 - niektóre zdjęcia mogą posiadać więcej niż jeden defekt co może wprowadzać model w błąd
 - dane nie są posortowane kategoriami przez co trzeba to robić kodem
 - przypadki defektów trudne do wykrycia (mouse_bite i open_circuit)
 
-### zagrożenia:
+### Zagrożenia:
 - możliwe późniejsze nałożenie licencji przez twórcę
 - możliwe zawieszenie dostępu do plików przez twórcę
 
