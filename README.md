@@ -13,7 +13,7 @@ jest samohostowany oraz umożliwia rozkład projektu na komponenty dające przej
 Program działa na 2 płaszczyznach - Frontend (flask) i Backend (Reactjs).
 - W folderze backend należy stworzyć środowisko wirtualne ``` python -m venv venv ```, a następnie w nie wejść ```venv/Scripts/activate``` (Windows) albo ```vanv/bin/activate``` (Linux) i pobrać wymagane biblioteki z pliku requirements.txt ```pip install -r requirements.txt```. W celu uruchomienia serwera należy za pomocą polecenia ```flask --app main.py run``` uruchomić główny plik operacyjny.
 
-- W folderze PCB_Flaw_Detection_UI po pobraniu node js, należy zainstalować npm ```npm install``` oraz uruchomić projekt ```npm run dev```
+- W folderze powinien być folder PCB_Flaw_Detection_UI, ale frontend mamy na innym repozytorium ```https://github.com/MagPiePL/PCB_Flaw_Detection_UI.git``` po sklonowaniu repozytorium i pobraniu node js, należy zainstalować npm ```npm install``` oraz uruchomić projekt ```npm run dev```
 
 ## Zbiory danych:
 - Użyto zestawu danych: 
