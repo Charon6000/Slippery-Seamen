@@ -14,24 +14,30 @@ CORS(app)
 def upload_data():
     file = request.files.get("files")
 
-    if file:
-        filename = file.filename
-        save_path = os.path.join("tempFiles/", filename)
-        file.save(save_path)
-    else:
-        return
+    if not file:
+        return jsonify({"error": "no file uploaded"}), 400
 
-    
-    predictions = classify_and_categorize(temp_dir_name = "tempFiles", model_path = 'models/model.h5', cleanup=True)
-    print(predictions)
+    filename = file.filename
+    save_path = os.path.join("tempFiles", filename)
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    file.save(save_path)
 
-    return jsonify({
-        "results": [{
-                "file_name": request.files.get("files").filename,
-                "mouse_bite": predictions[0][2],
-                "spur": predictions[1][2],
-                "missing_hole": predictions[2][2],
-                "short": predictions[3][2],
-                "opencircut": predictions[4][2],
-                 "spurious_copper": predictions[5][2],
-             }]})
+    # [(index, label, confidence), ...]
+    predictions = classify_and_categorize(temp_dir_name="tempFiles", model_path='models/model.h5', cleanup=True)
+
+    if not predictions:
+        return jsonify({"error": "no prediction returned"}), 500
+
+    pred_map = {label: float(conf) for (_idx, label, conf) in predictions}
+
+    result = {
+        "file_name": filename,
+        "mouse_bite": pred_map.get("0_mouse_bite", 0.0),
+        "spur": pred_map.get("1_spur", 0.0),
+        "missing_hole": pred_map.get("2_missing_hole", 0.0),
+        "short": pred_map.get("3_short", 0.0),
+        "opencircut": pred_map.get("4_open_circuit", 0.0),
+        "spurious_copper": pred_map.get("5_spurious_copper", 0.0),
+    }
+
+    return jsonify(result)
