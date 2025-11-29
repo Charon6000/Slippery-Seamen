@@ -1,25 +1,37 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-# from tensorflow.keras import layers, models 
+from tensorflow.keras import layers, models 
+from pathlib import Path
+from flask import send_file
+from tensorflow.keras.models import load_model
+import os
+from classify_many import classify_and_categorize
+
 
 app = Flask(__name__)
 CORS(app)
 @app.route("/", methods=["POST"])
 def upload_data():
+    file = request.files.get("files")
+
+    if file:
+        filename = file.filename
+        save_path = os.path.join("tempFiles/", filename)
+        file.save(save_path)
+    else:
+        return
+
+    
+    predictions = classify_and_categorize(temp_dir_name = "tempFiles", model_path = 'models/model.h5', cleanup=True)
+    print(predictions)
+
     return jsonify({
         "results": [{
-                "file_name": request.files.get("files").name,
-                "mouse_bite": 1,
-                "spur": 0,
-                "missing_hole": 1,
-                "short": 1,
-                "opencircut": 0,
-                 "spurious_copper": 1,
+                "file_name": request.files.get("files").filename,
+                "mouse_bite": predictions[0][2],
+                "spur": predictions[1][2],
+                "missing_hole": predictions[2][2],
+                "short": predictions[3][2],
+                "opencircut": predictions[4][2],
+                 "spurious_copper": predictions[5][2],
              }]})
-                    
-    # return jsonify({"mouse_bite": {models.load_model("mouse_bite_model.h5").predict(request.files.get("files"))},
-    #                 "spur": {models.load_model("spur_model.h5").predict(request.files.get("files"))},
-    #                 "missing_hole": {models.load_model("missing_hole_model.h5").predict(request.files.get("files"))},
-    #                 "short": {models.load_model("short_model.h5").predict(request.files.get("files"))},
-    #                 "opencircut": {models.load_model("opencircut_model.h5").predict(request.files.get("files"))},
-    #                 "spurious_copper": {models.load_model("spurious_copper_model.h5").predict(request.files.get("files"))},})

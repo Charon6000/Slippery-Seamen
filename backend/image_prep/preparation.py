@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
-def prepare(base_path: Path, IMG_SIZE = (600, 600)):
+def prepare(base_path: Path, IMG_SIZE = (224, 224)):
     sorting_path = Path(__file__).resolve().parent / "sorting.py"
     spec = importlib.util.spec_from_file_location("sorting", sorting_path)
     sorting = importlib.util.module_from_spec(spec)
@@ -56,8 +56,9 @@ def prepare(base_path: Path, IMG_SIZE = (600, 600)):
     train_ds = train_ds.map(lambda x,y: (normalization(x), y), num_parallel_calls=tf.data.AUTOTUNE)
     train_ds = train_ds.prefetch(tf.data.AUTOTUNE)
 
-    val_ds = train_ds.map(lambda x,y: (normalization(x), y), num_parallel_calls=tf.data.AUTOTUNE)
-    val_ds = train_ds.prefetch(tf.data.AUTOTUNE)
+    # apply the same normalization / prefetch to validation dataset
+    val_ds = val_ds.map(lambda x,y: (normalization(x), y), num_parallel_calls=tf.data.AUTOTUNE)
+    val_ds = val_ds.prefetch(tf.data.AUTOTUNE)
 
     # show_images_from_dataset(val_ds, num=8, ncols=2)
 
