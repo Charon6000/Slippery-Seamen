@@ -23,10 +23,10 @@ model = Sequential([
   layers.MaxPooling2D(),
   layers.Conv2D(64, 3, padding='same', activation='relu'),
   layers.MaxPooling2D(),
-  layers.Flatten(),
   layers.RandomFlip("horizontal_and_vertical"),
   layers.RandomRotation(0.2),
   layers.RandomZoom(0.1),
+  layers.Flatten(),
   layers.Dense(128, activation='relu'),
   layers.Dense(num_classes, activation='softmax')
 ])

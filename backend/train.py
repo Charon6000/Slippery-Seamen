@@ -22,7 +22,7 @@ def train_model(path):
   model.fit(
     train_ds,
     validation_data=val_ds,
-    epochs=200
+    epochs=100
   )
   model.save(Path("models/model.h5"))
 
