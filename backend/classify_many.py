@@ -22,11 +22,11 @@ categories = [
     "5_spurious_copper"
 ]
 
-def classify_and_categorize(temp_dir_name=TEMP_DIR_NAME, model_path='models/final_model.keras', cleanup=True):
+def classify_and_categorize(temp_dir_name=TEMP_DIR_NAME, model_path='models/final_model.keras', cleanup=True, sort_results: bool = False):
     
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     base_dir = Path(__file__).resolve().parent.parent
-    model_path_abs = base_dir / model_path
+    model_path_abs = base_dir /'backend'/ model_path
     temp_dir_abs = base_dir / 'backend' / temp_dir_name
 
     if not temp_dir_abs.is_dir():
@@ -50,9 +50,16 @@ def classify_and_categorize(temp_dir_name=TEMP_DIR_NAME, model_path='models/fina
                 x = preprocess_input(x)
                 x = np.expand_dims(x, 0)
                 preds = model.predict(x, verbose=0)[0]
-                idxs = np.argsort(preds)[::-1][:len(categories)]
                 results = []
-                for i in idxs:
+                if sort_results:
+                    # return categories sorted by confidence (desc)
+                    idxs = np.argsort(preds)[::-1][:len(categories)]
+                    iterable = idxs
+                else:
+                    # preserve original category order (0..N-1) — do not sort
+                    iterable = range(len(categories))
+
+                for i in iterable:
                     label = categories[i] if i < len(categories) else f"Unknown_Class_{i}"
                     results.append((int(i), label, float(preds[i])))
                 
@@ -72,5 +79,4 @@ def classify_and_categorize(temp_dir_name=TEMP_DIR_NAME, model_path='models/fina
             elif child.is_dir():
                 shutil.rmtree(child)
         logging.info(f"Successfully removed contents of temporary directory: {temp_dir_abs}")
-
-classify_and_categorize()
+    return results
