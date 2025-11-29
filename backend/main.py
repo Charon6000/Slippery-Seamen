@@ -32,12 +32,12 @@ def upload_data():
 
     result = {
         "file_name": filename,
-        "mouse_bite": pred_map.get("0_mouse_bite", 0.0),
-        "spur": pred_map.get("1_spur", 0.0),
-        "missing_hole": pred_map.get("2_missing_hole", 0.0),
-        "short": pred_map.get("3_short", 0.0),
-        "opencircut": pred_map.get("4_open_circuit", 0.0),
-        "spurious_copper": pred_map.get("5_spurious_copper", 0.0),
+        "mouse_bite": round(pred_map.get("0_mouse_bite", 0.0),2),
+        "spur": round(pred_map.get("1_spur", 0.0),2),
+        "missing_hole": round(pred_map.get("2_missing_hole", 0.0),2),
+        "short": round(pred_map.get("3_short", 0.0),2),
+        "opencircut": round(pred_map.get("4_open_circuit", 0.0),2),
+        "spurious_copper": round(pred_map.get("5_spurious_copper", 0.0),2),
     }
 
     return jsonify(result)
